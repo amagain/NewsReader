@@ -12,13 +12,10 @@ import RxSwift
 import RxCocoa
 
 class NewsTableViewController: UITableViewController {
-    
-//    @IBOutlet weak var tableView: UITableView!
-    
+
+    private var articles = [Article]()
     let disposeBag = DisposeBag()
     
-    private var articles = [Article]()
-    //67a6f9415d1e49ad8dc91d85b3eb3d53
     override func viewDidLoad() {
         super.viewDidLoad()
         self.navigationController?.navigationBar.prefersLargeTitles = true
