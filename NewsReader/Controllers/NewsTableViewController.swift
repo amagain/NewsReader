@@ -13,7 +13,8 @@ import RxCocoa
 
 class NewsTableViewController: UITableViewController {
 
-    private var articles = [Article]()
+    private var articleListVM: ArticleListViewModel!
+    
     let disposeBag = DisposeBag()
     
     override func viewDidLoad() {
@@ -25,13 +26,14 @@ class NewsTableViewController: UITableViewController {
     private func populateNews() {
         
         URLRequest.load(resource: ArticleList.all)
-            .subscribe(onNext: { [weak self] result in
-                if let result = result {
-                    self?.articles = result.articles
+            .subscribe(onNext: { [weak self] articleResponse in
+                let articles = articleResponse?.articles
+                self?.articleListVM = ArticleListViewModel(articles!)
+                
                     DispatchQueue.main.async {
                         self?.tableView.reloadData()
                     }
-                }
+                
             }).disposed(by: disposeBag)
                 
         }
@@ -41,15 +43,23 @@ class NewsTableViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return self.articles.count
+        return self.articleListVM == nil ? 0: self.articleListVM.articlesVM.count
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "ArticleTableViewCell", for: indexPath) as? ArticleTableViewCell  else {
             fatalError("Cell Doesn't Exist")
         }
-        cell.titleLabel.text = self.articles[indexPath.row].title
-        cell.descriptionLabel.text = self.articles[indexPath.row].description
+        let articleVM = self.articleListVM.articleAt(indexPath.row)
+    
+        articleVM.title.asDriver(onErrorJustReturn: "")
+        .drive(cell.titleLabel.rx.text)
+        .disposed(by: disposeBag)
+        
+        articleVM.description.asDriver(onErrorJustReturn: "")
+            .drive(cell.descriptionLabel.rx.text)
+        .disposed(by: disposeBag)
+        
         return cell
     }
         
